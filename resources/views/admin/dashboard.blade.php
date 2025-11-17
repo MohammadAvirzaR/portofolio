@@ -521,6 +521,47 @@
 
             <!-- Recent Activity -->
             <div class="management-card">
+                <h3><i class="bi bi-bell-fill"></i> Notifikasi Lamaran Terbaru</h3>
+                @if(Auth::user()->notifications->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Pelamar</th>
+                                <th>Posisi</th>
+                                <th>Pesan</th>
+                                <th>Waktu</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(Auth::user()->notifications->take(10) as $notif)
+                            <tr>
+                                <td><strong>{{ $notif->data['applicant'] }}</strong></td>
+                                <td>{{ $notif->data['job'] }}</td>
+                                <td>{{ $notif->data['message'] }}</td>
+                                <td>{{ $notif->created_at->diffForHumans() }}</td>
+                                <td>
+                                    <a href="{{ route('admin.jobs.applicants', \App\Models\Application::find($notif->data['application_id'])->job_posting_id ?? '#') }}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> Lihat
+                                    </a>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox" style="font-size: 2rem; color: #ddd;"></i>
+                    <p class="text-muted mt-2">Belum ada notifikasi lamaran</p>
+                </div>
+                @endif
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="management-card">
                 <h3><i class="bi bi-clock-history"></i> Recent Job Postings</h3>
                 <div class="table-responsive">
                     <table class="table table-hover">

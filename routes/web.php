@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\ApplicationController;
 use App\Models\Job;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -31,7 +32,8 @@ Route::get('/admin/dashboard', function () {
 })->middleware(['auth', 'admin'])->name('admin.dashboard');
 
 Route::get('/admin/users', function () {
-    return view('admin.users');
+    $users = User::all();
+    return view('admin.users', compact('users'));
 })->middleware(['auth', 'admin'])->name('admin.users');
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {

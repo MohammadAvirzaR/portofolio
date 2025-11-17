@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\Job;
+use App\Models\User;
+use App\Mail\ApplicationReceived;
+use App\Mail\ApplicationStatusMail;
+use App\Notifications\NewApplicationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ApplicationsExport;
 
@@ -57,12 +62,21 @@ class ApplicationController extends Controller
         $cvPath = $request->file('cv')->store('cv/' . Auth::id(), 'public');
 
         // Create application
-        Application::create([
+        $application = Application::create([
             'user_id' => Auth::id(),
             'job_posting_id' => $jobId,
             'cv_path' => $cvPath,
             'status' => 'pending',
         ]);
+
+        // Send email to admin with CV download link
+        $admin = User::where('role', 'admin')->first();
+        if ($admin) {
+            Mail::to($admin->email)->send(new ApplicationReceived($application));
+
+            // Trigger notification to admin
+            $admin->notify(new NewApplicationNotification($application));
+        }
 
         return redirect()->route('applications.index')
             ->with('success', 'Application submitted successfully! We will review your CV soon.');
@@ -130,6 +144,11 @@ class ApplicationController extends Controller
             $application->admin_notes = $validated['admin_notes'];
         }
         $application->save();
+
+        // Send email to applicant about status update (only if status changed to accepted or rejected)
+        if (isset($validated['status']) && in_array($validated['status'], ['accepted', 'rejected'])) {
+            Mail::to($application->user->email)->send(new ApplicationStatusMail($application));
+        }
 
         return back()->with('success', 'Application updated successfully!');
     }
