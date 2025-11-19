@@ -17,14 +17,10 @@ use App\Exports\ApplicationsExport;
 
 class ApplicationController extends Controller
 {
-    /**
-     * Show apply form for a specific job
-     */
     public function create($jobId)
     {
         $job = Job::findOrFail($jobId);
 
-        // Check if user already applied
         $existingApplication = Application::where('user_id', Auth::id())
             ->where('job_posting_id', $jobId)
             ->first();
@@ -37,18 +33,14 @@ class ApplicationController extends Controller
         return view('applications.create', compact('job'));
     }
 
-    /**
-     * Store application with CV upload
-     */
     public function store(Request $request, $jobId)
     {
         $job = Job::findOrFail($jobId);
 
         $validated = $request->validate([
-            'cv' => 'required|file|mimes:pdf|max:5120', // Max 5MB
+            'cv' => 'required|file|mimes:pdf|max:5120',
         ]);
 
-        // Check duplicate application
         $existingApplication = Application::where('user_id', Auth::id())
             ->where('job_posting_id', $jobId)
             ->first();
@@ -58,10 +50,8 @@ class ApplicationController extends Controller
                 ->with('error', 'You have already applied for this position!');
         }
 
-        // Store CV file
         $cvPath = $request->file('cv')->store('cv/' . Auth::id(), 'public');
 
-        // Create application
         $application = Application::create([
             'user_id' => Auth::id(),
             'job_posting_id' => $jobId,
@@ -69,22 +59,14 @@ class ApplicationController extends Controller
             'status' => 'pending',
         ]);
 
-        // Send email to admin with CV download link
         $admin = User::where('role', 'admin')->first();
         if ($admin) {
             Mail::to($admin->email)->send(new ApplicationReceived($application));
-
-            // Trigger notification to admin
             $admin->notify(new NewApplicationNotification($application));
-        }
-
-        return redirect()->route('applications.index')
+        }        return redirect()->route('applications.index')
             ->with('success', 'Application submitted successfully! We will review your CV soon.');
     }
 
-    /**
-     * Show user's applications list
-     */
     public function index()
     {
         $applications = Application::where('user_id', Auth::id())
@@ -95,9 +77,6 @@ class ApplicationController extends Controller
         return view('applications.index', compact('applications'));
     }
 
-    /**
-     * Admin: Show applicants for a specific job
-     */
     public function adminJobApplicants($jobId)
     {
         $job = Job::findOrFail($jobId);
@@ -109,9 +88,6 @@ class ApplicationController extends Controller
         return view('admin.applications.job-applicants', compact('job', 'applicants'));
     }
 
-    /**
-     * Admin: Show all applicants across jobs
-     */
     public function adminList()
     {
         $applications = Application::with('user', 'job')
@@ -121,12 +97,8 @@ class ApplicationController extends Controller
         return view('admin.applications.index', compact('applications'));
     }
 
-    /**
-     * Admin: Update application status
-     */
     public function adminUpdateStatus(Request $request, Application $application)
     {
-        // Check if user is admin
         if (Auth::user()->role !== 'admin') {
             abort(403, 'Unauthorized');
         }
@@ -136,7 +108,6 @@ class ApplicationController extends Controller
             'admin_notes' => 'nullable|string|max:1000',
         ]);
 
-        // Only update provided fields
         if (isset($validated['status'])) {
             $application->status = $validated['status'];
         }
@@ -145,7 +116,6 @@ class ApplicationController extends Controller
         }
         $application->save();
 
-        // Send email to applicant about status update (only if status changed to accepted or rejected)
         if (isset($validated['status']) && in_array($validated['status'], ['accepted', 'rejected'])) {
             Mail::to($application->user->email)->send(new ApplicationStatusMail($application));
         }
@@ -153,12 +123,8 @@ class ApplicationController extends Controller
         return back()->with('success', 'Application updated successfully!');
     }
 
-    /**
-     * Download CV
-     */
     public function downloadCv(Application $application)
     {
-        // Check if user is the applicant or admin
         if (Auth::id() !== $application->user_id && Auth::user()->role !== 'admin') {
             abort(403, 'Unauthorized');
         }
@@ -173,14 +139,10 @@ class ApplicationController extends Controller
         );
     }
 
-    /**
-     * Admin: Export applicants to Excel
-     */
     public function exportApplicants(Request $request)
     {
         $query = Application::with('user', 'job');
 
-        // Filter by job if specified
         if ($request->has('job_id') && $request->job_id) {
             $query->where('job_posting_id', $request->job_id);
         }
@@ -193,17 +155,11 @@ class ApplicationController extends Controller
         );
     }
 
-    /**
-     * Admin: Show import form
-     */
     public function importForm()
     {
         return view('admin.applications.import-jobs');
     }
 
-    /**
-     * Admin: Import jobs from Excel
-     */
     public function importJobs(Request $request)
     {
         $validated = $request->validate([
@@ -218,17 +174,12 @@ class ApplicationController extends Controller
         }
     }
 
-    /**
-     * Admin: Delete application
-     */
     public function adminDestroy(Application $application)
     {
-        // Check if user is admin
         if (Auth::user()->role !== 'admin') {
             abort(403, 'Unauthorized');
         }
 
-        // Delete CV file if exists
         if ($application->cv_path && Storage::disk('public')->exists($application->cv_path)) {
             Storage::disk('public')->delete($application->cv_path);
         }
@@ -238,9 +189,6 @@ class ApplicationController extends Controller
         return back()->with('success', 'Application deleted successfully!');
     }
 
-    /**
-     * Download template import jobs
-     */
     public function downloadTemplate()
     {
         return Excel::download(

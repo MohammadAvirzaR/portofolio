@@ -21,17 +21,11 @@ class Application extends Model
         'updated_at' => 'datetime',
     ];
 
-    /**
-     * Get the user who applied
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the job posting being applied to
-     */
     public function job()
     {
         return $this->belongsTo(Job::class, 'job_posting_id');

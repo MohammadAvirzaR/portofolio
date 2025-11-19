@@ -14,27 +14,16 @@ class NewApplicationNotification extends Notification
 
     protected $application;
 
-    /**
-     * Create a new notification instance.
-     */
     public function __construct(Application $application)
     {
         $this->application = $application;
     }
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
         return ['database'];
     }
 
-    /**
-     * Get the database representation of the notification.
-     */
     public function toDatabase(object $notifiable): array
     {
         return [
@@ -45,11 +34,6 @@ class NewApplicationNotification extends Notification
         ];
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(object $notifiable): array
     {
         return [
