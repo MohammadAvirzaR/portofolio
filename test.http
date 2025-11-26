@@ -1,0 +1,34 @@
+
+### Untuk Login
+POST http://127.0.0.1:8000/api/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "superadmin@jobportal.com",
+  "password": "superadmin123"
+}
+
+
+### untuk register
+POST http://127.0.0.1:8000/api/register
+Content-Type: application/json
+Accept: application/json
+
+Body:
+{
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "password123",
+    "password_confirmation": "password123"
+}
+
+### untuk get data pekerjaan (tanpa login)
+GET http://127.0.0.1:8000/api/public/jobs
+Content-Type: application/json
+Accept: application/json
+
+### untuk get data pekerjaan (dengan login)
+GET http://127.0.0.1:8000/api/jobs
+Accept: application/json
+Authorization: Bearer 8|FEyRXCSGl3m5EgorCMMrXkp4ObFs9RTF3vOyKLtk0de95324
