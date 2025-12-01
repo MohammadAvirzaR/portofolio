@@ -1,0 +1,33 @@
+name: Deploy JobPortal Application
+on:
+  push:
+    branches: ["main"]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install Dependencies
+        run: |
+          composer install --no-dev --optimize-autoloader
+
+      - name: Build docker images
+        run: docker build -t jobportal-app .
+
+      - name: Deploy to Server (via SSH)
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /var/www/portofolio
+            docker-compose down
+            docker-compose up -d --build
