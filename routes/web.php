@@ -37,7 +37,7 @@ Route::get('/admin/users', function () {
 })->middleware(['auth', 'admin'])->name('admin.users');
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
-    Route::resource('jobs', JobController::class)->names([
+    Route::resource('jobs', JobController::class)->except(['show'])->names([
         'index' => 'admin.jobs.index',
         'create' => 'admin.jobs.create',
         'store' => 'admin.jobs.store',
